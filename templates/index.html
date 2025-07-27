@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Virtual Try-On Interface</title>
+        <meta
+            name="description"
+            content="AI-powered virtual clothing try-on using advanced machine learning"
+        />
+        <meta
+            name="keywords"
+            content="virtual try-on, AI fashion, clothing simulation"
+        />
+
+        <!-- Preconnect to external resources -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+        <!-- CSS Files -->
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', path='css/liquid-glass.css') }}"
+        />
+        <link
+            rel="stylesheet"
+            href="{{ url_for('static', path='css/enhancements.css') }}"
+        />
+
+        <!-- Favicon -->
+        <link
+            rel="icon"
+            type="image/svg+xml"
+            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%238B5FBF'/></svg>"
+        />
+
+        <!-- PWA Meta Tags -->
+        <meta name="theme-color" content="#8B5FBF" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+            name="apple-mobile-web-app-status-bar-style"
+            content="black-translucent"
+        />
+
+        <!-- OpenGraph Meta Tags -->
+        <meta property="og:title" content="Virtual Try-On Interface" />
+        <meta
+            property="og:description"
+            content="Experience AI-powered virtual clothing try-on"
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="/static/images/og-image.jpg" />
+
+        <!-- Structured Data -->
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "WebApplication",
+                "name": "Virtual Try-On Interface",
+                "description": "AI-powered virtual clothing try-on application",
+                "applicationCategory": "LifestyleApplication",
+                "operatingSystem": "Web"
+            }
+        </script>
+    </head>
+    <body>
+        <!-- Floating Orbs Background (added by JavaScript) -->
+
+        <!-- Main Container -->
+        <div class="container">
+            <!-- Glass Card Container -->
+            <div class="glass-card">
+                <!-- Header Section -->
+                <header class="header">
+                    <h1>Virtual Try-On</h1>
+                    <p>Transform your style with AI-powered virtual fitting</p>
+                    <div class="auth-info">
+                        Authenticated as: <strong>{{ username }}</strong>
+                    </div>
+                </header>
+
+                <!-- Main Content -->
+                <main class="main-content">
+                    <!-- Instructions Section -->
+                    <section class="instructions">
+                        <h4>How to Use</h4>
+                        <ul>
+                            <li>
+                                <span class="step-number">1</span>
+                                Upload a clear photo of yourself (preferably
+                                full body or upper body)
+                            </li>
+                            <li>
+                                <span class="step-number">2</span>
+                                Upload an image of the garment you want to try
+                                on
+                            </li>
+                            <li>
+                                <span class="step-number">3</span>
+                                Click "Generate Try-On" and wait for processing
+                                (1-3 minutes)
+                            </li>
+                            <li>
+                                <span class="step-number">4</span>
+                                View your AI-generated virtual try-on result
+                            </li>
+                        </ul>
+                    </section>
+
+                    <!-- API Provider Status -->
+                    <section class="provider-status">
+                        <div class="status-card" id="providerStatus">
+                            <div class="status-content">
+                                <h4>AI Provider Status</h4>
+                                <div class="provider-info" id="providerInfo">
+                                    <span
+                                        class="provider-badge"
+                                        id="providerBadge"
+                                        >Loading...</span
+                                    >
+                                    <span class="status-text" id="statusText"
+                                        >Checking API availability...</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Upload Section -->
+                    <section class="upload-section">
+                        <!-- Person Image Upload -->
+                        <div class="upload-card" id="personCard">
+                            <div class="upload-icon">
+                                <svg
+                                    width="48"
+                                    height="48"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                    <path
+                                        d="M20.59 22C20.59 18.13 16.74 15 12 15C7.26 15 3.41 18.13 3.41 22"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                            </div>
+                            <h3>Upload Person Image</h3>
+                            <p>
+                                Select a clear photo of yourself for the best
+                                results
+                            </p>
+                            <input
+                                type="file"
+                                id="personImage"
+                                class="upload-input"
+                                accept="image/jpeg,image/png,image/jpg"
+                                aria-label="Upload person image"
+                            />
+                            <button
+                                type="button"
+                                class="upload-button"
+                                aria-label="Choose person image file"
+                            >
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        d="M14.2639 15.9375L12.5958 14.2834C12.267 13.9542 11.733 13.9542 11.4042 14.2834L9.73611 15.9375C9.40694 16.2667 9.40694 16.8 9.73611 17.1292C10.0653 17.4583 10.5993 17.4583 10.9285 17.1292L11.25 16.8125V21.375C11.25 21.8438 11.6042 22.2292 12.0625 22.2292C12.5208 22.2292 12.875 21.8438 12.875 21.375V16.8125L13.1965 17.1292C13.5257 17.4583 14.0597 17.4583 14.3889 17.1292C14.7181 16.8 14.7181 16.2667 14.2639 15.9375Z"
+                                        fill="currentColor"
+                                    />
+                                    <path
+                                        d="M17.5 8.75H15.625V6.875C15.625 3.78125 13.0938 1.25 10 1.25H6.875C3.78125 1.25 1.25 3.78125 1.25 6.875V17.5C1.25 20.5938 3.78125 23.125 6.875 23.125H17.5C20.5938 23.125 23.125 20.5938 23.125 17.5V14.375C23.125 11.2812 20.5938 8.75 17.5 8.75Z"
+                                        fill="currentColor"
+                                    />
+                                </svg>
+                                Choose Person Image
+                            </button>
+                            <img
+                                id="personPreview"
+                                class="image-preview"
+                                alt="Person preview"
+                                loading="lazy"
+                            />
+                            <div
+                                class="upload-progress"
+                                id="personProgress"
+                                style="display: none"
+                            >
+                                <div class="progress-bar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Garment Image Upload -->
+                        <div class="upload-card" id="garmentCard">
+                            <div class="upload-icon">
+                                <svg
+                                    width="48"
+                                    height="48"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        d="M16 4L12 2L8 4V6H16V4Z"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                    <path
+                                        d="M8 6V20C8 20.5304 8.21071 21.0391 8.58579 21.4142C8.96086 21.7893 9.46957 22 10 22H14C14.5304 22 15.0391 21.7893 15.4142 21.4142C15.7893 21.0391 16 20.5304 16 20V6H8Z"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                            </div>
+                            <h3>Upload Garment Image</h3>
+                            <p>Select the clothing item you want to try on</p>
+                            <input
+                                type="file"
+                                id="garmentImage"
+                                class="upload-input"
+                                accept="image/jpeg,image/png,image/jpg"
+                                aria-label="Upload garment image"
+                            />
+                            <button
+                                type="button"
+                                class="upload-button"
+                                aria-label="Choose garment image file"
+                            >
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        d="M14.2639 15.9375L12.5958 14.2834C12.267 13.9542 11.733 13.9542 11.4042 14.2834L9.73611 15.9375C9.40694 16.2667 9.40694 16.8 9.73611 17.1292C10.0653 17.4583 10.5993 17.4583 10.9285 17.1292L11.25 16.8125V21.375C11.25 21.8438 11.6042 22.2292 12.0625 22.2292C12.5208 22.2292 12.875 21.8438 12.875 21.375V16.8125L13.1965 17.1292C13.5257 17.4583 14.0597 17.4583 14.3889 17.1292C14.7181 16.8 14.7181 16.2667 14.2639 15.9375Z"
+                                        fill="currentColor"
+                                    />
+                                    <path
+                                        d="M17.5 8.75H15.625V6.875C15.625 3.78125 13.0938 1.25 10 1.25H6.875C3.78125 1.25 1.25 3.78125 1.25 6.875V17.5C1.25 20.5938 3.78125 23.125 6.875 23.125H17.5C20.5938 23.125 23.125 20.5938 23.125 17.5V14.375C23.125 11.2812 20.5938 8.75 17.5 8.75Z"
+                                        fill="currentColor"
+                                    />
+                                </svg>
+                                Choose Garment Image
+                            </button>
+                            <img
+                                id="garmentPreview"
+                                class="image-preview"
+                                alt="Garment preview"
+                                loading="lazy"
+                            />
+                            <div
+                                class="upload-progress"
+                                id="garmentProgress"
+                                style="display: none"
+                            >
+                                <div class="progress-bar"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Messages Section -->
+                    <section class="messages-section">
+                        <div
+                            class="error-message"
+                            id="errorMessage"
+                            role="alert"
+                            aria-live="polite"
+                        ></div>
+                        <div
+                            class="success-message"
+                            id="successMessage"
+                            role="status"
+                            aria-live="polite"
+                        ></div>
+                    </section>
+
+                    <!-- Process Section -->
+                    <section class="process-section">
+                        <button
+                            type="button"
+                            class="process-button"
+                            id="processButton"
+                            disabled
+                            aria-label="Generate virtual try-on result"
+                        >
+                            <span class="button-icon">
+                                <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        d="M13 2L3 14H12L11 22L21 10H12L13 2Z"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                            </span>
+                            <span class="button-text">Generate Try-On</span>
+                            <span class="button-sparkle"></span>
+                        </button>
+                        <p class="process-hint">
+                            <span class="hint-icon"></span>
+                            Tip: Use high-quality images for the best results
+                        </p>
+                    </section>
+
+                    <!-- Loading Section -->
+                    <section class="loading" id="loading" aria-live="polite">
+                        <div class="spinner-container">
+                            <div class="spinner"></div>
+                            <div class="spinner-glow"></div>
+                        </div>
+                        <div class="loading-content">
+                            <p class="loading-text">
+                                Processing your virtual try-on...
+                            </p>
+                            <small class="loading-subtext"
+                                >This may take 1-3 minutes. Please be
+                                patient.</small
+                            >
+                            <div class="loading-steps">
+                                <div class="step active">
+                                    <span class="step-dot"></span>
+                                    <span class="step-label"
+                                        >Analyzing Images</span
+                                    >
+                                </div>
+                                <div class="step">
+                                    <span class="step-dot"></span>
+                                    <span class="step-label"
+                                        >AI Processing</span
+                                    >
+                                </div>
+                                <div class="step">
+                                    <span class="step-dot"></span>
+                                    <span class="step-label"
+                                        >Generating Result</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Results Section -->
+                    <section class="results-section" id="results">
+                        <div class="results-header">
+                            <h3>
+                                <span class="results-icon"></span>
+                                Your Virtual Try-On Result
+                            </h3>
+                            <div class="results-actions">
+                                <button
+                                    type="button"
+                                    class="action-button download-btn"
+                                    onclick="downloadResult()"
+                                    aria-label="Download result image"
+                                >
+                                    <svg
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                        <path
+                                            d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        />
+                                        <path
+                                            d="M7 10L12 15L17 10"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        />
+                                        <path
+                                            d="M12 15V3"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        />
+                                    </svg>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                        <div class="result-container">
+                            <img
+                                id="resultImage"
+                                class="result-image"
+                                alt="Virtual try-on result"
+                                loading="lazy"
+                            />
+                            <div class="result-overlay">
+                                <div class="result-badge">
+                                    <span class="badge-text">AI Generated</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="results-footer">
+                            <p class="results-note">
+                                <span class="note-icon">ℹ️</span>
+                                Results may vary based on image quality and
+                                garment compatibility
+                            </p>
+                            <button
+                                type="button"
+                                class="secondary-button"
+                                onclick="resetInterface()"
+                                aria-label="Try another combination"
+                            >
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        d="M1 4V10H7"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                    <path
+                                        d="M3.51 15C4.48 18.09 7.36 20.36 10.82 20.83C17.39 21.72 23 16.64 23 10C23 3.93 18.07 -1 12 1C9.61 2.13 7.88 4.16 7.26 6.67"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                Try Another Combination
+                            </button>
+                        </div>
+                    </section>
+                </main>
+            </div>
+        </div>
+
+        <!-- Accessibility Skip Link -->
+        <a href="#main-content" class="skip-link">Skip to main content</a>
+
+        <!-- JavaScript -->
+        <script src="{{ url_for('static', path='js/app.js') }}" defer></script>
+
+        <!-- Additional Helper Functions -->
+        <script>
+            // Check API provider status on page load
+            async function checkProviderStatus() {
+                try {
+                    const response = await fetch("/api/status");
+                    const data = await response.json();
+
+                    const providerBadge =
+                        document.getElementById("providerBadge");
+                    const statusText = document.getElementById("statusText");
+
+                    if (data.primary_provider === "AI Processing") {
+                        providerBadge.textContent = "AI Processing";
+                        providerBadge.className =
+                            "provider-badge ai-processing";
+                        statusText.textContent =
+                            "Using advanced AI processing for enhanced virtual try-on results";
+                    } else if (data.primary_provider === "Fallback Service") {
+                        providerBadge.textContent = "Standard Processing";
+                        providerBadge.className = "provider-badge fallback";
+                        statusText.textContent =
+                            "Using standard processing service for virtual try-on";
+                    } else {
+                        providerBadge.textContent = "Processing Service";
+                        providerBadge.className = "provider-badge standard";
+                        statusText.textContent =
+                            "Ready for virtual try-on processing";
+                    }
+                } catch (error) {
+                    console.error("Failed to check provider status:", error);
+                    const providerBadge =
+                        document.getElementById("providerBadge");
+                    const statusText = document.getElementById("statusText");
+                    providerBadge.textContent = "Error";
+                    providerBadge.className = "provider-badge loading";
+                    statusText.textContent = "Unable to determine API status";
+                }
+            }
+
+            // Call on page load
+            document.addEventListener("DOMContentLoaded", checkProviderStatus);
+
+            // Download result image
+            function downloadResult() {
+                const image = document.getElementById("resultImage");
+                if (image.src) {
+                    const link = document.createElement("a");
+                    link.download = "virtual-tryon-result.jpg";
+                    link.href = image.src;
+                    link.click();
+                }
+            }
+
+            // Reset interface
+            function resetInterface() {
+                if (
+                    confirm(
+                        "Are you sure you want to start over? This will clear your current images and result.",
+                    )
+                ) {
+                    location.reload();
+                }
+            }
+
+            // Keyboard accessibility
+            document.addEventListener("keydown", function (e) {
+                // Alt + U to focus upload buttons
+                if (e.altKey && e.key === "u") {
+                    e.preventDefault();
+                    document.querySelector(".upload-button").focus();
+                }
+
+                // Alt + P to focus process button
+                if (e.altKey && e.key === "p") {
+                    e.preventDefault();
+                    const processBtn = document.getElementById("processButton");
+                    if (!processBtn.disabled) {
+                        processBtn.focus();
+                    }
+                }
+            });
+
+            // Performance observer for monitoring
+            if ("PerformanceObserver" in window) {
+                const observer = new PerformanceObserver((list) => {
+                    for (const entry of list.getEntries()) {
+                        if (entry.name.includes("image")) {
+                            console.log(
+                                `Image loaded: ${entry.name} in ${entry.duration}ms`,
+                            );
+                        }
+                    }
+                });
+                observer.observe({ entryTypes: ["resource"] });
+            }
+
+            // Service Worker registration (for future PWA features)
+            if ("serviceWorker" in navigator) {
+                window.addEventListener("load", () => {
+                    navigator.serviceWorker
+                        .register("/sw.js")
+                        .then((registration) => {
+                            console.log("SW registered: ", registration);
+                        })
+                        .catch((registrationError) => {
+                            console.log(
+                                "SW registration failed: ",
+                                registrationError,
+                            );
+                        });
+                });
+            }
+        </script>
+
+        <!-- Schema.org structured data -->
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "Virtual Try-On Interface",
+                "applicationCategory": "MultimediaApplication",
+                "operatingSystem": "Web Browser",
+                "description": "AI-powered virtual clothing try-on application using advanced machine learning",
+                "author": {
+                    "@type": "Organization",
+                    "name": "Zylo Solutions"
+                }
+            }
+        </script>
+    </body>
+</html>

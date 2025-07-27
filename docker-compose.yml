@@ -1,0 +1,140 @@
+# AI Virtual Try-On Application - Docker Compose Configuration
+# Provides easy deployment with optional database and reverse proxy
+
+services:
+  # =============================================================================
+  # MAIN APPLICATION
+  # =============================================================================
+
+  app:
+    build: .
+    container_name: ai-virtual-tryon
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # AI Service Configuration
+      - KLING_ACCESS_KEY=${KLING_ACCESS_KEY:-}
+      - KLING_SECRET_KEY=${KLING_SECRET_KEY:-}
+
+      # Authentication
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-tryon2024}
+
+      # Server Settings
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=${DEBUG:-false}
+
+      # Processing Settings
+      - API_TIMEOUT=${API_TIMEOUT:-300}
+      - PROCESSING_TIMEOUT=${PROCESSING_TIMEOUT:-600}
+      - MAX_IMAGE_SIZE_MB=${MAX_IMAGE_SIZE_MB:-10}
+
+    volumes:
+      # Persistent data
+      - ./data:/app/data
+      - ./logs:/app/logs
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    networks:
+      - ai-tryon-network
+
+  # =============================================================================
+  # NGINX REVERSE PROXY (Optional)
+  # =============================================================================
+
+  nginx:
+    image: nginx:alpine
+    container_name: ai-tryon-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - ai-tryon-network
+    profiles:
+      - production
+
+  # =============================================================================
+  # REDIS CACHE (Optional)
+  # =============================================================================
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai-tryon-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai-tryon-network
+    profiles:
+      - production
+
+# =============================================================================
+# NETWORKS & VOLUMES
+# =============================================================================
+
+networks:
+  ai-tryon-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local
+# =============================================================================
+# USAGE INSTRUCTIONS
+# =============================================================================
+
+# Development (app only):
+# docker-compose up
+
+# Production (with nginx and redis):
+# docker-compose --profile production up
+
+# Build and run:
+# docker-compose up --build
+
+# Run in background:
+# docker-compose up -d
+
+# View logs:
+# docker-compose logs -f app
+
+# Stop services:
+# docker-compose down
+
+# Stop and remove volumes:
+# docker-compose down -v
+
+# =============================================================================
+# ENVIRONMENT VARIABLES
+# =============================================================================
+
+# Create a .env file in the same directory as this docker-compose.yml:
+
+# # AI Service Credentials
+# KLING_ACCESS_KEY=your_access_key
+# KLING_SECRET_KEY=your_secret_key
+
+# # Authentication
+# ADMIN_USERNAME=admin
+# ADMIN_PASSWORD=your_secure_password
+
+# # Optional Settings
+# DEBUG=false
+# API_TIMEOUT=300
+# PROCESSING_TIMEOUT=600
+# MAX_IMAGE_SIZE_MB=10
