@@ -19,6 +19,7 @@ import requests
 from gradio_client import Client
 from dotenv import load_dotenv
 from kling_ai_client import KlingAIClient, process_virtual_tryon_kling
+from body_measurements import BodyMeasurementPredictor, get_size_recommendations
 
 # Load environment variables
 load_dotenv()
@@ -56,6 +57,9 @@ HF_SPACE_URL = "https://kwai-kolors-kolors-virtual-try-on.hf.space"
 KLING_ACCESS_KEY = os.getenv('KLING_ACCESS_KEY', 'AJeTKte39b4nNKTGmh8ErCQEb9yM9pDg')
 KLING_SECRET_KEY = os.getenv('KLING_SECRET_KEY', 'ef4G4CeGYfkDmTgfBdGhLJAkFCeGyANE')
 USE_KLING_AI = True  # Enable KlingAI by default
+
+# Initialize body measurement predictor
+body_predictor = BodyMeasurementPredictor()
 
 def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
     """Verify username and password"""
@@ -416,29 +420,67 @@ async def call_alternative_queue_api(person_image_data: str, garment_image_data:
         except Exception as e:
             return {"success": False, "error": f"Alternative queue error: {str(e)}"}
 
-@app.get("/", response_class=HTMLResponse)
-async def main_page(request: Request, username: str = Depends(verify_credentials)):
-    """Serve the main application page"""
-    return templates.TemplateResponse(
-        "index.html",
-        {
-            "request": request,
-            "username": username,
-            "title": "Virtual Try-On Interface",
-            "description": "AI-powered virtual clothing try-on"
+@app.get("/")
+async def home(request: Request, username: str = Depends(verify_credentials)):
+    """Serve the main virtual try-on interface"""
+    return templates.TemplateResponse("index.html", {"request": request, "username": username})
+
+@app.get("/test-measurements")
+async def test_measurements_page(request: Request):
+    """Serve the body measurements test page"""
+    return templates.TemplateResponse("test_measurements.html", {"request": request})
+
+@app.get("/test-upload")
+async def test_upload():
+    """Test endpoint to check if server is accessible"""
+    return {"status": "Server is accessible", "max_file_size": "100MB"}
+
+@app.post("/test-file-upload")
+async def test_file_upload(
+    test_file: UploadFile = File(...),
+    username: str = Depends(verify_credentials)
+):
+    """Test file upload functionality"""
+    try:
+        file_size = len(await test_file.read())
+        return {
+            "success": True,
+            "filename": test_file.filename,
+            "file_size": f"{file_size / (1024*1024):.2f}MB",
+            "content_type": test_file.content_type
         }
-    )
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.post("/process")
 async def process_virtual_tryon(
     person_image: UploadFile = File(...),
     garment_image: UploadFile = File(...),
+    height: float = Form(..., description="Height in centimeters"),
+    weight: float = Form(..., description="Weight in kilograms"),
+    gender: str = Form(default="unisex", description="Gender: male, female, or unisex"),
     username: str = Depends(verify_credentials)
 ):
-    """Process virtual try-on using Kling AI (preferred) or Hugging Face API (fallback)"""
+    """Process virtual try-on with body measurements prediction using Kling AI (preferred) or Hugging Face API (fallback)"""
 
     try:
         print(f"🔄 Processing request for user: {username}")
+        print(f"📏 User measurements: {height}cm, {weight}kg, {gender}")
+
+        # Validate inputs
+        if height < 120 or height > 250:
+            raise HTTPException(status_code=400, detail="Height must be between 120-250 cm")
+        if weight < 30 or weight > 300:
+            raise HTTPException(status_code=400, detail="Weight must be between 30-300 kg")
+        if gender.lower() not in ['male', 'female', 'unisex']:
+            raise HTTPException(status_code=400, detail="Gender must be 'male', 'female', or 'unisex'")
+
+        # Predict body measurements
+        print("📐 Calculating body measurements...")
+        measurements = body_predictor.predict_measurements(height, weight, gender.lower())
+        size_recommendations = get_size_recommendations(measurements)
+        
+        print(f"📊 Predicted measurements - Chest: {measurements.chest_cm}cm, Waist: {measurements.waist_cm}cm, Hip: {measurements.hip_cm}cm")
 
         # Validate file types and sizes
         if not person_image.content_type.startswith('image/'):
@@ -469,7 +511,25 @@ async def process_virtual_tryon(
                         "result_image": result["result_image"],
                         "message": "Virtual try-on completed successfully",
                         "provider": result.get("provider", "ai_processing"),
-                        "task_id": result.get("task_id")
+                        "task_id": result.get("task_id"),
+                        "body_measurements": {
+                            "height_cm": measurements.height_cm,
+                            "weight_kg": measurements.weight_kg,
+                            "gender": measurements.gender.value,
+                            "chest_cm": measurements.chest_cm,
+                            "waist_cm": measurements.waist_cm,
+                            "hip_cm": measurements.hip_cm,
+                            "shoulder_width_cm": measurements.shoulder_width_cm,
+                            "neck_cm": measurements.neck_cm,
+                            "arm_length_cm": measurements.arm_length_cm,
+                            "inseam_cm": measurements.inseam_cm,
+                            "thigh_cm": measurements.thigh_cm,
+                            "calf_cm": measurements.calf_cm,
+                            "bmi": measurements.bmi,
+                            "body_fat_percentage": measurements.body_fat_percentage,
+                            "ideal_weight_range": measurements.ideal_weight_range
+                        },
+                        "size_recommendations": size_recommendations
                     })
                 else:
                     print(f"Primary service failed, trying fallback: {result['error']}")
@@ -486,13 +546,49 @@ async def process_virtual_tryon(
                 "success": True,
                 "result_image": result["result_image"],
                 "message": "Virtual try-on completed successfully",
-                "provider": "fallback_service"
+                "provider": "fallback_service",
+                "body_measurements": {
+                    "height_cm": measurements.height_cm,
+                    "weight_kg": measurements.weight_kg,
+                    "gender": measurements.gender.value,
+                    "chest_cm": measurements.chest_cm,
+                    "waist_cm": measurements.waist_cm,
+                    "hip_cm": measurements.hip_cm,
+                    "shoulder_width_cm": measurements.shoulder_width_cm,
+                    "neck_cm": measurements.neck_cm,
+                    "arm_length_cm": measurements.arm_length_cm,
+                    "inseam_cm": measurements.inseam_cm,
+                    "thigh_cm": measurements.thigh_cm,
+                    "calf_cm": measurements.calf_cm,
+                    "bmi": measurements.bmi,
+                    "body_fat_percentage": measurements.body_fat_percentage,
+                    "ideal_weight_range": measurements.ideal_weight_range
+                },
+                "size_recommendations": size_recommendations
             })
         else:
             print(f"Virtual try-on failed: {result['error']}")
             return JSONResponse({
                 "success": False,
-                "error": result["error"]
+                "error": result["error"],
+                "body_measurements": {
+                    "height_cm": measurements.height_cm,
+                    "weight_kg": measurements.weight_kg,
+                    "gender": measurements.gender.value,
+                    "chest_cm": measurements.chest_cm,
+                    "waist_cm": measurements.waist_cm,
+                    "hip_cm": measurements.hip_cm,
+                    "shoulder_width_cm": measurements.shoulder_width_cm,
+                    "neck_cm": measurements.neck_cm,
+                    "arm_length_cm": measurements.arm_length_cm,
+                    "inseam_cm": measurements.inseam_cm,
+                    "thigh_cm": measurements.thigh_cm,  
+                    "calf_cm": measurements.calf_cm,
+                    "bmi": measurements.bmi,
+                    "body_fat_percentage": measurements.body_fat_percentage,
+                    "ideal_weight_range": measurements.ideal_weight_range
+                },
+                "size_recommendations": size_recommendations
             }, status_code=500)
 
     except HTTPException:
@@ -502,6 +598,138 @@ async def process_virtual_tryon(
         return JSONResponse({
             "success": False,
             "error": f"Server error: {str(e)}"
+        }, status_code=500)
+
+@app.post("/predict-measurements")
+async def predict_body_measurements(
+    height: float = Form(..., description="Height in centimeters"),
+    weight: float = Form(..., description="Weight in kilograms"),
+    gender: str = Form(default="unisex", description="Gender: male, female, or unisex")
+    # Temporarily remove authentication for debugging
+    # username: str = Depends(verify_credentials)
+):
+    """Predict body measurements based on height, weight, and gender"""
+    
+    try:
+        print(f"📏 Predicting measurements")
+        print(f"📐 Input: {height}cm, {weight}kg, {gender}")
+
+        # Validate inputs
+        if height < 120 or height > 250:
+            raise HTTPException(status_code=400, detail="Height must be between 120-250 cm")
+        if weight < 30 or weight > 300:
+            raise HTTPException(status_code=400, detail="Weight must be between 30-300 kg")
+        if gender.lower() not in ['male', 'female', 'unisex']:
+            raise HTTPException(status_code=400, detail="Gender must be 'male', 'female', or 'unisex'")
+
+        # Predict body measurements
+        measurements = body_predictor.predict_measurements(height, weight, gender.lower())
+        size_recommendations = get_size_recommendations(measurements)
+        
+        print(f"✅ Predictions complete - BMI: {measurements.bmi}, Chest: {measurements.chest_cm}cm")
+
+        return JSONResponse({
+            "success": True,
+            "message": "Body measurements predicted successfully",
+            "body_measurements": {
+                "height_cm": measurements.height_cm,
+                "weight_kg": measurements.weight_kg,
+                "gender": measurements.gender.value,
+                "chest_cm": measurements.chest_cm,
+                "waist_cm": measurements.waist_cm,
+                "hip_cm": measurements.hip_cm,
+                "shoulder_width_cm": measurements.shoulder_width_cm,
+                "neck_cm": measurements.neck_cm,
+                "arm_length_cm": measurements.arm_length_cm,
+                "inseam_cm": measurements.inseam_cm,
+                "thigh_cm": measurements.thigh_cm,
+                "calf_cm": measurements.calf_cm,
+                "bmi": measurements.bmi,
+                "body_fat_percentage": measurements.body_fat_percentage,
+                "ideal_weight_range": measurements.ideal_weight_range
+            },
+            "size_recommendations": size_recommendations,
+            "health_metrics": {
+                "bmi_category": size_recommendations["bmi_category"],
+                "ideal_weight_range": size_recommendations["ideal_weight"],
+                "body_fat_estimate": f"{measurements.body_fat_percentage}%"
+            }
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"💥 Error predicting measurements: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({
+            "success": False,
+            "error": f"Failed to predict measurements: {str(e)}"
+        }, status_code=500)
+
+@app.post("/test-measurements")
+async def test_body_measurements(
+    height: float = Form(..., description="Height in centimeters"),
+    weight: float = Form(..., description="Weight in kilograms"),
+    gender: str = Form(default="unisex", description="Gender: male, female, or unisex")
+):
+    """Test endpoint for body measurements without authentication"""
+    
+    try:
+        print(f"🧪 Testing measurements endpoint")
+        print(f"📐 Input: {height}cm, {weight}kg, {gender}")
+
+        # Validate inputs
+        if height < 120 or height > 250:
+            raise HTTPException(status_code=400, detail="Height must be between 120-250 cm")
+        if weight < 30 or weight > 300:
+            raise HTTPException(status_code=400, detail="Weight must be between 30-300 kg")
+        if gender.lower() not in ['male', 'female', 'unisex']:
+            raise HTTPException(status_code=400, detail="Gender must be 'male', 'female', or 'unisex'")
+
+        # Predict body measurements
+        measurements = body_predictor.predict_measurements(height, weight, gender.lower())
+        size_recommendations = get_size_recommendations(measurements)
+        
+        print(f"✅ Test predictions complete - BMI: {measurements.bmi}, Chest: {measurements.chest_cm}cm")
+
+        return JSONResponse({
+            "success": True,
+            "message": "Body measurements predicted successfully (test mode)",
+            "body_measurements": {
+                "height_cm": measurements.height_cm,
+                "weight_kg": measurements.weight_kg,
+                "gender": measurements.gender.value,
+                "chest_cm": measurements.chest_cm,
+                "waist_cm": measurements.waist_cm,
+                "hip_cm": measurements.hip_cm,
+                "shoulder_width_cm": measurements.shoulder_width_cm,
+                "neck_cm": measurements.neck_cm,
+                "arm_length_cm": measurements.arm_length_cm,
+                "inseam_cm": measurements.inseam_cm,
+                "thigh_cm": measurements.thigh_cm,
+                "calf_cm": measurements.calf_cm,
+                "bmi": measurements.bmi,
+                "body_fat_percentage": measurements.body_fat_percentage,
+                "ideal_weight_range": measurements.ideal_weight_range
+            },
+            "size_recommendations": size_recommendations,
+            "health_metrics": {
+                "bmi_category": size_recommendations["bmi_category"],
+                "ideal_weight_range": size_recommendations["ideal_weight"],
+                "body_fat_estimate": f"{measurements.body_fat_percentage}%"
+            }
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"💥 Error in test measurements: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JSONResponse({
+            "success": False,
+            "error": f"Failed to predict measurements: {str(e)}"
         }, status_code=500)
 
 @app.get("/health")

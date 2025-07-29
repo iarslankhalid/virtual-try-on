@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Body Measurements Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .debug {
+            background: #e2e3e5;
+            border: 1px solid #d1d3d4;
+            color: #383d41;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .measurements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .measurement-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+        .measurement-label {
+            font-weight: bold;
+            color: #495057;
+            font-size: 14px;
+        }
+        .measurement-value {
+            font-size: 18px;
+            color: #007bff;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧮 Body Measurements Test</h1>
+        <p>This is a test page to debug the body measurements prediction feature.</p>
+        
+        <form id="measurementForm">
+            <div class="form-group">
+                <label for="height">Height (cm)</label>
+                <input type="number" id="height" name="height" min="120" max="250" step="0.1" placeholder="175" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="weight">Weight (kg)</label>
+                <input type="number" id="weight" name="weight" min="30" max="300" step="0.1" placeholder="70" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender" required>
+                    <option value="unisex">Unisex</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+            </div>
+            
+            <button type="submit" id="predictBtn">🔬 Predict Measurements</button>
+        </form>
+        
+        <div id="debugOutput" class="result debug"></div>
+        <div id="successOutput" class="result success"></div>
+        <div id="errorOutput" class="result error"></div>
+    </div>
+
+    <script>
+        document.getElementById('measurementForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const debugOutput = document.getElementById('debugOutput');
+            const successOutput = document.getElementById('successOutput');
+            const errorOutput = document.getElementById('errorOutput');
+            const predictBtn = document.getElementById('predictBtn');
+            
+            // Clear previous results
+            debugOutput.style.display = 'none';
+            successOutput.style.display = 'none';
+            errorOutput.style.display = 'none';
+            
+            // Show debug output
+            debugOutput.style.display = 'block';
+            debugOutput.textContent = '🔍 Starting measurement prediction...\n';
+            
+            // Get form data
+            const height = document.getElementById('height').value;
+            const weight = document.getElementById('weight').value;
+            const gender = document.getElementById('gender').value;
+            
+            debugOutput.textContent += `📐 Input: height=${height}cm, weight=${weight}kg, gender=${gender}\n`;
+            
+            // Disable button
+            predictBtn.disabled = true;
+            predictBtn.textContent = '⏳ Calculating...';
+            
+            try {
+                // Prepare form data
+                const formData = new FormData();
+                formData.append('height', height);
+                formData.append('weight', weight);
+                formData.append('gender', gender);
+                
+                debugOutput.textContent += '📡 Sending request to /predict-measurements\n';
+                
+                // Make request
+                const response = await fetch('/predict-measurements', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                debugOutput.textContent += `📊 Response status: ${response.status}\n`;
+                debugOutput.textContent += `📋 Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}\n`;
+                
+                const result = await response.json();
+                debugOutput.textContent += `📋 Response data: ${JSON.stringify(result, null, 2)}\n`;
+                
+                if (response.ok && result.success) {
+                    debugOutput.textContent += '✅ Prediction successful!\n';
+                    
+                    // Show success
+                    successOutput.style.display = 'block';
+                    successOutput.innerHTML = `
+                        <h3>🎉 Prediction Successful!</h3>
+                        <div class="measurements-grid">
+                            <div class="measurement-item">
+                                <div class="measurement-label">BMI</div>
+                                <div class="measurement-value">${result.body_measurements.bmi}</div>
+                            </div>
+                            <div class="measurement-item">
+                                <div class="measurement-label">Chest</div>
+                                <div class="measurement-value">${result.body_measurements.chest_cm} cm</div>
+                            </div>
+                            <div class="measurement-item">
+                                <div class="measurement-label">Waist</div>
+                                <div class="measurement-value">${result.body_measurements.waist_cm} cm</div>
+                            </div>
+                            <div class="measurement-item">
+                                <div class="measurement-label">Hip</div>
+                                <div class="measurement-value">${result.body_measurements.hip_cm} cm</div>
+                            </div>
+                            <div class="measurement-item">
+                                <div class="measurement-label">Shirt Size</div>
+                                <div class="measurement-value">${result.size_recommendations.shirt_size}</div>
+                            </div>
+                            <div class="measurement-item">
+                                <div class="measurement-label">Pant Size</div>
+                                <div class="measurement-value">${result.size_recommendations.pant_size}</div>
+                            </div>
+                            <div class="measurement-item">
+                                <div class="measurement-label">BMI Category</div>
+                                <div class="measurement-value">${result.size_recommendations.bmi_category}</div>
+                            </div>
+                            <div class="measurement-item">
+                                <div class="measurement-label">Body Fat</div>
+                                <div class="measurement-value">${result.health_metrics.body_fat_estimate}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    debugOutput.textContent += `❌ Prediction failed: ${result.error || 'Unknown error'}\n`;
+                    
+                    // Show error
+                    errorOutput.style.display = 'block';
+                    errorOutput.textContent = `❌ Error: ${result.error || 'Failed to predict measurements'}`;
+                }
+                
+            } catch (error) {
+                debugOutput.textContent += `💥 Network error: ${error.message}\n`;
+                debugOutput.textContent += `Stack trace: ${error.stack}\n`;
+                
+                // Show error
+                errorOutput.style.display = 'block';
+                errorOutput.textContent = `💥 Network Error: ${error.message}`;
+            } finally {
+                // Re-enable button
+                predictBtn.disabled = false;
+                predictBtn.textContent = '🔬 Predict Measurements';
+            }
+        });
+
+        // Auto-fill with example data
+        document.getElementById('height').value = '175';
+        document.getElementById('weight').value = '70';
+        document.getElementById('gender').value = 'male';
+    </script>
+</body>
+</html>

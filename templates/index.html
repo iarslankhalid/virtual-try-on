@@ -984,6 +984,218 @@
             display: inline-block;
         }
 
+        /* Body Measurements Section */
+        .measurements-section {
+            background: var(--glass-primary);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            margin: var(--spacing-xl) 0;
+            box-shadow: var(--shadow-glass);
+            transition: all var(--animation-normal);
+        }
+
+        .measurements-section:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .measurements-header {
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .measurements-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: var(--spacing-sm);
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(40,40,40,0.5);
+        }
+
+        .measurements-icon {
+            font-size: 1.5rem;
+            margin-right: var(--spacing-sm);
+        }
+
+        .measurements-header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .measurements-form {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .measurement-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .input-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            transition: all var(--animation-normal);
+        }
+
+        .input-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .input-label {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-label svg {
+            margin-right: var(--spacing-xs);
+            opacity: 0.8;
+        }
+
+        .measurement-input,
+        .measurement-select {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all var(--animation-normal);
+            outline: none;
+        }
+
+        .measurement-input:focus,
+        .measurement-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .measurement-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .input-hint {
+            display: block;
+            margin-top: var(--spacing-xs);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
+        }
+
+        .prediction-actions {
+            text-align: center;
+            margin: var(--spacing-lg) 0;
+        }
+
+        .predict-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: var(--spacing-md) var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all var(--animation-normal);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .predict-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #7c9df5 0%, #8b6bb1 100%);
+        }
+
+        .predict-button .button-icon {
+            margin-right: var(--spacing-xs);
+        }
+
+        .predictions-display {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-lg);
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .predictions-header {
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .predictions-header h4 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: var(--spacing-sm);
+            text-shadow: 0 2px 8px rgba(40,40,40,0.5);
+        }
+
+        .predictions-icon {
+            font-size: 1.2rem;
+            margin-right: var(--spacing-xs);
+        }
+
+        .predictions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .prediction-item {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-md);
+            text-align: center;
+            transition: all var(--animation-normal);
+        }
+
+        .prediction-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .prediction-label {
+            font-size: 1rem;
+            color: #fff;
+            margin-bottom: var(--spacing-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            text-shadow: 0 1px 4px rgba(40,40,40,0.4);
+        }
+
+        .prediction-value {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #fff;
+            background: none;
+            text-shadow: 0 2px 8px rgba(40,40,40,0.5);
+        }
+
         /* Message Section */
         .messages-section {
             margin: var(--spacing-lg) 0;
@@ -1523,6 +1735,112 @@
                         </div>
                     </section>
 
+                    <!-- Body Measurements Section -->
+                    <section class="measurements-section">
+                        <div class="measurements-header">
+                            <h3>
+                                <span class="measurements-icon">📏</span>
+                                Body Measurements
+                            </h3>
+                            <p>Enter your measurements for personalized size predictions</p>
+                        </div>
+                        
+                        <div class="measurements-form">
+                            <div class="measurement-group">
+                                <div class="input-card">
+                                    <label for="height" class="input-label">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12 2V22M8 6L12 2L16 6M8 18L12 22L16 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        Height (cm)
+                                    </label>
+                                    <input 
+                                        type="number" 
+                                        id="height" 
+                                        class="measurement-input" 
+                                        placeholder="175" 
+                                        min="120" 
+                                        max="250"
+                                        step="0.1"
+                                        required
+                                        aria-label="Height in centimeters"
+                                    />
+                                    <small class="input-hint">120-250 cm</small>
+                                </div>
+                                
+                                <div class="input-card">
+                                    <label for="weight" class="input-label">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12 2C13.1046 2 14 2.89543 14 4C14 5.10457 13.1046 6 12 6C10.8954 6 10 5.10457 10 4C10 2.89543 10.8954 2 12 2Z" stroke="currentColor" stroke-width="2"/>
+                                            <path d="M21 9H3L5 21H19L21 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M16 13V17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M8 13V17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                        Weight (kg)
+                                    </label>
+                                    <input 
+                                        type="number" 
+                                        id="weight" 
+                                        class="measurement-input" 
+                                        placeholder="70" 
+                                        min="30" 
+                                        max="300"
+                                        step="0.1"
+                                        required
+                                        aria-label="Weight in kilograms"
+                                    />
+                                    <small class="input-hint">30-300 kg</small>
+                                </div>
+                                
+                                <div class="input-card">
+                                    <label for="gender" class="input-label">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                                            <path d="M8 14S9.5 16 12 16S16 14 16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M9 9H9.01M15 9H15.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                        </svg>
+                                        Gender
+                                    </label>
+                                    <select 
+                                        id="gender" 
+                                        class="measurement-select"
+                                        aria-label="Select gender for size calculations"
+                                    >
+                                        <option value="unisex">Unisex</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                    <small class="input-hint">For size accuracy</small>
+                                </div>
+                            </div>
+                            
+                            <div class="prediction-actions">
+                                <button
+                                    type="button"
+                                    class="predict-button"
+                                    id="predictButton"
+                                    aria-label="Predict body measurements"
+                                >
+                                    <span class="button-icon">📊</span>
+                                    <span class="button-text">Predict Sizes</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Predicted Measurements Display -->
+                        <div class="predictions-display" id="predictionsDisplay" style="display: none;">
+                            <div class="predictions-header">
+                                <h4>
+                                    <span class="predictions-icon">📐</span>
+                                    Predicted Measurements
+                                </h4>
+                            </div>
+                            <div class="predictions-grid" id="predictionsGrid">
+                                <!-- Predictions will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- Messages Section -->
                     <section class="messages-section">
                         <div
@@ -1871,6 +2189,11 @@
                         this.processImages();
                     });
 
+                    // Predict measurements button
+                    document.getElementById('predictButton').addEventListener('click', () => {
+                        this.predictMeasurements();
+                    });
+
                     // Upload button clicks
                     document.querySelectorAll('.upload-button').forEach(button => {
                         button.addEventListener('click', (e) => {
@@ -2132,6 +2455,140 @@
                     }
                 }
 
+                // Predict body measurements
+                async predictMeasurements() {
+                    console.log('🔍 Starting measurement prediction...');
+                    
+                    const height = document.getElementById('height').value;
+                    const weight = document.getElementById('weight').value;
+                    const gender = document.getElementById('gender').value;
+
+                    console.log(`📐 Input values: height=${height}, weight=${weight}, gender=${gender}`);
+
+                    // Validate inputs
+                    if (!height || !weight) {
+                        console.log('❌ Validation failed: missing height or weight');
+                        this.showError('Please enter both height and weight.');
+                        return;
+                    }
+
+                    if (height < 120 || height > 250) {
+                        console.log('❌ Validation failed: height out of range');
+                        this.showError('Height must be between 120-250 cm.');
+                        return;
+                    }
+
+                    if (weight < 30 || weight > 300) {
+                        console.log('❌ Validation failed: weight out of range');
+                        this.showError('Weight must be between 30-300 kg.');
+                        return;
+                    }
+
+                    // Show loading state
+                    const predictButton = document.getElementById('predictButton');
+                    const originalText = predictButton.innerHTML;
+                    predictButton.innerHTML = '<span class="button-icon">⏳</span><span class="button-text">Calculating...</span>';
+                    predictButton.disabled = true;
+
+                    try {
+                        console.log('📡 Preparing form data...');
+                        const formData = new FormData();
+                        formData.append('height', height);
+                        formData.append('weight', weight);
+                        formData.append('gender', gender);
+
+                        console.log('🚀 Sending request to /predict-measurements');
+                        const response = await fetch('/predict-measurements', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        console.log(`📊 Response status: ${response.status}`);
+                        const result = await response.json();
+                        console.log('📋 Response data:', result);
+
+                        if (response.ok && result.success) {
+                            console.log('✅ Prediction successful, displaying results');
+                            this.displayPredictions(result);
+                            this.showSuccess('Body measurements predicted successfully! 📏');
+                        } else {
+                            console.log('❌ Prediction failed:', result.error);
+                            this.showError(result.error || 'Failed to predict measurements. Please try again.');
+                        }
+                    } catch (error) {
+                        console.error('💥 Network error:', error);
+                        this.showError('Network error. Please check your connection and try again.');
+                    } finally {
+                        predictButton.innerHTML = originalText;
+                        predictButton.disabled = false;
+                    }
+                }
+
+                // Display prediction results
+                displayPredictions(result) {
+                    const predictionsDisplay = document.getElementById('predictionsDisplay');
+                    const predictionsGrid = document.getElementById('predictionsGrid');
+                    
+                    const measurements = result.body_measurements;
+                    const recommendations = result.size_recommendations;
+
+                    // Create prediction items
+                    const predictionItems = [
+                        { label: 'BMI', value: `${measurements.bmi} (${recommendations.bmi_category})` },
+                        { label: 'Chest', value: `${measurements.chest_cm} cm` },
+                        { label: 'Waist', value: `${measurements.waist_cm} cm` },
+                        { label: 'Hip', value: `${measurements.hip_cm} cm` },
+                        { label: 'Shoulders', value: `${measurements.shoulder_width_cm} cm` },
+                        { label: 'Neck', value: `${measurements.neck_cm} cm` },
+                        { label: 'Arm Length', value: `${measurements.arm_length_cm} cm` },
+                        { label: 'Inseam', value: `${measurements.inseam_cm} cm` },
+                        { label: 'Thigh', value: `${measurements.thigh_cm} cm` },
+                        { label: 'Calf', value: `${measurements.calf_cm} cm` },
+                        { label: 'Shirt Size', value: recommendations.shirt_size },
+                        { label: 'Pant Size', value: recommendations.pant_size },
+                        { label: 'Dress Size', value: recommendations.dress_size },
+                        { label: 'Shoe Size', value: recommendations.shoe_size },
+                        { label: 'Body Fat', value: `${measurements.body_fat_percentage}%` },
+                        { label: 'Ideal Weight', value: recommendations.ideal_weight }
+                    ];
+
+                    // Clear previous results
+                    predictionsGrid.innerHTML = '';
+
+                    // Add prediction items with animation
+                    predictionItems.forEach((item, index) => {
+                        const predictionItem = document.createElement('div');
+                        predictionItem.className = 'prediction-item';
+                        predictionItem.style.opacity = '0';
+                        predictionItem.style.transform = 'translateY(20px)';
+                        
+                        predictionItem.innerHTML = `
+                            <div class="prediction-label">${item.label}</div>
+                            <div class="prediction-value">${item.value}</div>
+                        `;
+                        
+                        predictionsGrid.appendChild(predictionItem);
+
+                        // Animate in with delay
+                        setTimeout(() => {
+                            predictionItem.style.transition = 'all 0.5s ease-out';
+                            predictionItem.style.opacity = '1';
+                            predictionItem.style.transform = 'translateY(0)';
+                        }, index * 100);
+                    });
+
+                    // Show predictions display
+                    predictionsDisplay.style.display = 'block';
+                    
+                    // Scroll to predictions
+                    setTimeout(() => {
+                        predictionsDisplay.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }, 500);
+                }
+
                 // Process images with enhanced UX
                 async processImages() {
                     if (!this.personImageFile || !this.garmentImageFile || this.isProcessing) {
@@ -2156,6 +2613,22 @@
                         const formData = new FormData();
                         formData.append('person_image', this.personImageFile);
                         formData.append('garment_image', this.garmentImageFile);
+                        
+                        // Add body measurements if available
+                        const height = document.getElementById('height').value;
+                        const weight = document.getElementById('weight').value;
+                        const gender = document.getElementById('gender').value;
+                        
+                        if (height && weight) {
+                            formData.append('height', height);
+                            formData.append('weight', weight);
+                            formData.append('gender', gender);
+                        } else {
+                            // Use default values if not provided
+                            formData.append('height', '175');
+                            formData.append('weight', '70');
+                            formData.append('gender', 'unisex');
+                        }
 
                         const response = await fetch('/process', {
                             method: 'POST',
@@ -2166,6 +2639,12 @@
 
                         if (response.ok && result.success) {
                             this.showResults(result.result_image);
+                            
+                            // Display body measurements if available
+                            if (result.body_measurements) {
+                                this.displayMeasurementsInResults(result);
+                            }
+                            
                             this.showSuccess('Virtual try-on completed successfully! 🎉');
 
                             // Scroll to results smoothly
@@ -2186,6 +2665,14 @@
                         this.hideLoading();
                         processButton.style.transform = '';
                         this.checkCanProcess();
+                    }
+                }
+
+                // Display measurements in results section
+                displayMeasurementsInResults(result) {
+                    // Update or show the predictions display with the measurements from the try-on result
+                    if (result.body_measurements && result.size_recommendations) {
+                        this.displayPredictions(result);
                     }
                 }
 
@@ -2346,23 +2833,6 @@
                     }
                 });
                 observer.observe({ entryTypes: ["resource"] });
-            }
-
-            // Service Worker registration (for future PWA features)
-            if ("serviceWorker" in navigator) {
-                window.addEventListener("load", () => {
-                    navigator.serviceWorker
-                        .register("/sw.js")
-                        .then((registration) => {
-                            console.log("SW registered: ", registration);
-                        })
-                        .catch((registrationError) => {
-                            console.log(
-                                "SW registration failed: ",
-                                registrationError,
-                            );
-                        });
-                });
             }
         </script>
 
