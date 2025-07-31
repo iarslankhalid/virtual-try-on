@@ -1,0 +1,1593 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enhanced Virtual Try-On with Sizing</title>
+    <meta name="description" content="AI-powered virtual clothing try-on with pose detection and intelligent sizing" />
+    
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <style>
+        /* Enhanced Styling for Sizing Interface */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .form-section h3 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #ffffff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #8B5FBF;
+            box-shadow: 0 0 0 3px rgba(139, 95, 191, 0.3);
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-upload-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-btn:hover {
+            border-color: #8B5FBF;
+            background: rgba(139, 95, 191, 0.1);
+        }
+
+        .size-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .size-option {
+            padding: 15px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .size-option:hover {
+            border-color: #8B5FBF;
+            background: rgba(139, 95, 191, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .size-option.selected {
+            border-color: #8B5FBF;
+            background: rgba(139, 95, 191, 0.2);
+            color: white;
+        }
+
+        .size-option.recommended {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .size-option.recommended::after {
+            content: "⭐ Recommended";
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #4CAF50;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .size-label {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .size-description {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .size-try-btn {
+            background: linear-gradient(135deg, #8B5FBF 0%, #6A4C93 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .size-try-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(139, 95, 191, 0.4);
+        }
+
+        .size-try-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(20px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8B5FBF 0%, #6A4C93 100%);
+            color: white;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 95, 191, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .result-image {
+            max-width: 100%;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .fit-indicator {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .fit-perfect {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+
+        .fit-loose {
+            background: rgba(255, 193, 7, 0.3);
+            color: #FFC107;
+            border: 1px solid #FFC107;
+        }
+
+        .fit-tight {
+            background: rgba(244, 67, 54, 0.3);
+            color: #F44336;
+            border: 1px solid #F44336;
+        }
+
+        .measurements-display {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .measurements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .measurement-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .measurement-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8B5FBF;
+        }
+
+        .measurement-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #8B5FBF;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .size-comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .size-comparison-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .error-message {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #F44336;
+            color: #F44336;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .success-message {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .size-comparison-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .comparison-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .comparison-item:hover {
+            border-color: rgba(139, 95, 191, 0.5);
+            transform: translateY(-5px);
+        }
+
+        .comparison-header {
+            margin-bottom: 15px;
+        }
+
+        .comparison-header h4 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #8B5FBF;
+        }
+
+        .comparison-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .comparison-details {
+            text-align: left;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .comparison-details p {
+            margin-bottom: 8px;
+        }
+
+        .ai-size-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .ai-size-btn {
+            padding: 10px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 60px;
+        }
+
+        .ai-size-btn:hover {
+            border-color: #8B5FBF;
+            background: rgba(139, 95, 191, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .ai-size-btn.active {
+            border-color: #8B5FBF;
+            background: rgba(139, 95, 191, 0.4);
+            color: white;
+        }
+
+        .ai-size-btn.recommended {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .ai-size-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .fit-analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .fit-analysis-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .fit-analysis-item.selected {
+            border-color: #8B5FBF;
+            background: rgba(139, 95, 191, 0.2);
+            transform: scale(1.05);
+        }
+
+        .fit-analysis-item h5 {
+            color: #8B5FBF;
+            margin-bottom: 10px;
+        }
+
+        .ai-result-size-controls {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Enhanced Virtual Try-On</h1>
+            <p>AI-powered virtual clothing try-on with pose detection and intelligent sizing</p>
+        </div>
+
+        <form id="tryOnForm" class="glass-card">
+            <div class="form-grid">
+                <!-- Body Measurements Section -->
+                <div class="form-section">
+                    <h3>📏 Body Measurements</h3>
+                    
+                    <div class="form-group">
+                        <label for="height">Height (cm)</label>
+                        <input type="number" id="height" name="height" class="form-control" 
+                               placeholder="Enter height in cm" min="120" max="250" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="weight">Weight (kg)</label>
+                        <input type="number" id="weight" name="weight" class="form-control" 
+                               placeholder="Enter weight in kg" min="30" max="300" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" name="gender" class="form-control">
+                            <option value="unisex">Unisex</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+
+                    <button type="button" id="analyzeFitBtn" class="btn btn-secondary">
+                        📊 Analyze Fit for All Sizes
+                    </button>
+                </div>
+
+                <!-- Image Upload Section -->
+                <div class="form-section">
+                    <h3>📸 Upload Images</h3>
+                    
+                    <div class="form-group">
+                        <label>Person Image</label>
+                        <div class="file-upload">
+                            <input type="file" id="personImage" name="person_image" accept="image/*" required>
+                            <div class="file-upload-btn">
+                                <span>📤 Click to upload person image</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Garment Image</label>
+                        <div class="file-upload">
+                            <input type="file" id="garmentImage" name="garment_image" accept="image/*" required>
+                            <div class="file-upload-btn">
+                                <span>👕 Click to upload garment image</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" id="analyzePoseBtn" class="btn btn-secondary">
+                        🕺 Analyze Pose First
+                    </button>
+                </div>
+            </div>
+
+            <!-- Size Selection -->
+            <div class="form-section">
+                <h3>👕 Select Garment Size to Try On</h3>
+                <p style="margin-bottom: 15px; opacity: 0.8;">Choose your desired size and try it on individually</p>
+                
+                <div class="size-selection">
+                    <div class="size-option" data-size="XS">
+                        <div class="size-label">XS</div>
+                        <div class="size-description">Extra Small</div>
+                        <button type="button" class="size-try-btn" data-size="XS">Try On XS</button>
+                    </div>
+                    <div class="size-option" data-size="S">
+                        <div class="size-label">S</div>
+                        <div class="size-description">Small</div>
+                        <button type="button" class="size-try-btn" data-size="S">Try On S</button>
+                    </div>
+                    <div class="size-option selected" data-size="M">
+                        <div class="size-label">M</div>
+                        <div class="size-description">Medium</div>
+                        <button type="button" class="size-try-btn" data-size="M">Try On M</button>
+                    </div>
+                    <div class="size-option" data-size="L">
+                        <div class="size-label">L</div>
+                        <div class="size-description">Large</div>
+                        <button type="button" class="size-try-btn" data-size="L">Try On L</button>
+                    </div>
+                    <div class="size-option" data-size="XL">
+                        <div class="size-label">XL</div>
+                        <div class="size-description">Extra Large</div>
+                        <button type="button" class="size-try-btn" data-size="XL">Try On XL</button>
+                    </div>
+                    <div class="size-option" data-size="XXL">
+                        <div class="size-label">XXL</div>
+                        <div class="size-description">2X Large</div>
+                        <button type="button" class="size-try-btn" data-size="XXL">Try On XXL</button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <button type="button" id="compareAllSizes" class="btn btn-secondary" style="margin-right: 10px;">
+                        📊 Compare All Sizes (S, M, L)
+                    </button>
+                    <button type="button" id="findMySize" class="btn btn-secondary">
+                        🎯 Find My Perfect Size
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn btn-primary">
+                🎭 Generate Virtual Try-On with Sizing Analysis
+            </button>
+        </form>
+
+        <!-- Loading Animation -->
+        <div id="loading" class="loading glass-card">
+            <div class="spinner"></div>
+            <h3>Processing your virtual try-on...</h3>
+            <p>This may take a few moments. We're analyzing your pose, calculating measurements, and generating the perfect fit!</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" style="display: none;">
+            <!-- Pose Analysis Results -->
+            <div id="poseResults" class="glass-card" style="display: none;">
+                <h3>🕺 Pose Analysis Results</h3>
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h4>Original Image</h4>
+                        <img id="originalImage" class="result-image" alt="Original Image">
+                    </div>
+                    <div class="result-card">
+                        <h4>Pose Detection</h4>
+                        <img id="poseImage" class="result-image" alt="Pose Detection">
+                        <div id="poseInfo"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fit Analysis Results -->
+            <div id="fitResults" class="glass-card" style="display: none;">
+                <h3>📊 Garment Fit Analysis</h3>
+                <div id="measurementsDisplay" class="measurements-display">
+                    <h4>Predicted Body Measurements</h4>
+                    <div class="measurements-grid" id="measurementsGrid">
+                        <!-- Measurements will be populated here -->
+                    </div>
+                </div>
+                <div id="sizeAnalysis" class="size-comparison-grid">
+                    <!-- Size analysis will be populated here -->
+                </div>
+            </div>
+
+            <!-- Virtual Try-On Results -->
+            <div id="tryOnResults" class="glass-card" style="display: none;">
+                <h3>🎭 Virtual Try-On Results</h3>
+                
+                <!-- Interactive Size Selection for AI Result -->
+                <div class="ai-result-size-controls" style="margin-bottom: 20px; text-align: center;">
+                    <h4 style="margin-bottom: 15px;">Try Different Sizes on Your AI Result</h4>
+                    <div class="ai-size-buttons">
+                        <button type="button" class="ai-size-btn" data-size="XS">XS</button>
+                        <button type="button" class="ai-size-btn" data-size="S">S</button>
+                        <button type="button" class="ai-size-btn active" data-size="M">M</button>
+                        <button type="button" class="ai-size-btn" data-size="L">L</button>
+                        <button type="button" class="ai-size-btn" data-size="XL">XL</button>
+                        <button type="button" class="ai-size-btn" data-size="XXL">XXL</button>
+                    </div>
+                    <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 10px;">
+                        Click any size to see how it would fit on your AI-processed image
+                    </p>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h4>Your Virtual Try-On</h4>
+                        <div id="fitIndicator" class="fit-indicator">Perfect Fit</div>
+                        <img id="tryOnImage" class="result-image" alt="Virtual Try-On Result">
+                        <div id="fitDetails"></div>
+                        
+                        <!-- Size-specific overlay -->
+                        <div id="sizeOverlay" style="display: none;">
+                            <canvas id="sizeCanvas" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+                        </div>
+                    </div>
+                    <div class="result-card">
+                        <h4>Size Comparison (S, M, L)</h4>
+                        <img id="comparisonGrid" class="result-image" alt="Size Comparison">
+                        <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 10px;">
+                            See how different sizes would look on you
+                        </p>
+                        
+                        <!-- Quick comparison buttons -->
+                        <div style="margin-top: 15px;">
+                            <button type="button" class="btn btn-secondary" id="compareQuickSizes" style="width: 100%;">
+                                🔄 Regenerate S, M, L Comparison
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fit Analysis Table -->
+                <div id="fitAnalysisTable" class="glass-card" style="margin-top: 20px; display: none;">
+                    <h4>📊 Detailed Size Analysis</h4>
+                    <div class="fit-analysis-grid">
+                        <!-- Will be populated with size analysis data -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+        <div id="successMessage" class="success-message" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Global variables
+        let selectedSize = 'M';
+        let currentMeasurements = null;
+
+        // Size selection handling
+        document.querySelectorAll('.size-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.size-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedSize = this.dataset.size;
+            });
+        });
+
+        // Individual size try-on buttons
+        document.querySelectorAll('.size-try-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const sizeToTry = this.dataset.size;
+                await tryOnSpecificSize(sizeToTry);
+            });
+        });
+
+        // Compare all sizes button
+        document.getElementById('compareAllSizes').addEventListener('click', async function() {
+            await compareAllSizes();
+        });
+
+        // Find my size button  
+        document.getElementById('findMySize').addEventListener('click', async function() {
+            await findPerfectSize();
+        });
+
+        // Function to try on a specific size
+        async function tryOnSpecificSize(size) {
+            const personImage = document.getElementById('personImage').files[0];
+            const garmentImage = document.getElementById('garmentImage').files[0];
+            const height = document.getElementById('height').value;
+            const weight = document.getElementById('weight').value;
+            const gender = document.getElementById('gender').value;
+            
+            if (!personImage || !garmentImage || !height || !weight) {
+                showError('Please upload both images and enter your measurements first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const formData = new FormData();
+                formData.append('person_image', personImage);
+                formData.append('garment_image', garmentImage);
+                formData.append('height', height);
+                formData.append('weight', weight);
+                formData.append('gender', gender);
+                formData.append('selected_size', size);
+
+                const response = await fetch('/process-with-sizing', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                hideLoading();
+
+                if (result.success) {
+                    showSingleSizeResult(result, size);
+                    showSuccess(`Size ${size} try-on completed! Check how it fits.`);
+                } else {
+                    showError('Try-on failed: ' + result.error);
+                }
+            } catch (error) {
+                hideLoading();
+                showError('Error processing try-on: ' + error.message);
+            }
+        }
+
+        // Function to compare all sizes
+        async function compareAllSizes() {
+            const personImage = document.getElementById('personImage').files[0];
+            const garmentImage = document.getElementById('garmentImage').files[0];
+            const height = document.getElementById('height').value;
+            const weight = document.getElementById('weight').value;
+            const gender = document.getElementById('gender').value;
+            
+            if (!personImage || !garmentImage || !height || !weight) {
+                showError('Please upload both images and enter your measurements first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                // Process S, M, L sizes
+                const sizes = ['S', 'M', 'L'];
+                const results = [];
+
+                for (const size of sizes) {
+                    const formData = new FormData();
+                    formData.append('person_image', personImage);
+                    formData.append('garment_image', garmentImage);
+                    formData.append('height', height);
+                    formData.append('weight', weight);
+                    formData.append('gender', gender);
+                    formData.append('selected_size', size);
+
+                    const response = await fetch('/process-with-sizing', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        results.push({size, ...result});
+                    }
+                }
+
+                hideLoading();
+                
+                if (results.length > 0) {
+                    showSizeComparisonResults(results);
+                    showSuccess('Size comparison completed! See how different sizes look on you.');
+                } else {
+                    showError('Failed to generate size comparisons');
+                }
+            } catch (error) {
+                hideLoading();
+                showError('Error comparing sizes: ' + error.message);
+            }
+        }
+
+        // Function to find perfect size
+        async function findPerfectSize() {
+            const height = document.getElementById('height').value;
+            const weight = document.getElementById('weight').value;
+            const gender = document.getElementById('gender').value;
+            
+            if (!height || !weight) {
+                showError('Please enter your height and weight first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const formData = new FormData();
+                formData.append('height', height);
+                formData.append('weight', weight);
+                formData.append('gender', gender);
+
+                const response = await fetch('/analyze-garment-fit', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                hideLoading();
+
+                if (result.success) {
+                    currentMeasurements = result.body_measurements;
+                    showFitResults(result);
+                    updateSizeRecommendations(result.size_analysis);
+                    
+                    // Automatically try on the recommended size
+                    const recommendedSize = result.size_analysis.recommended_size;
+                    showSuccess(`Your perfect size is ${recommendedSize}! Automatically trying it on...`);
+                    setTimeout(() => tryOnSpecificSize(recommendedSize), 1000);
+                } else {
+                    showError('Size analysis failed: ' + result.error);
+                }
+            } catch (error) {
+                hideLoading();
+                showError('Error finding perfect size: ' + error.message);
+            }
+        }
+
+        // File upload preview
+        document.getElementById('personImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const btn = e.target.nextElementSibling;
+                btn.innerHTML = `📤 ${file.name}`;
+            }
+        });
+
+        document.getElementById('garmentImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const btn = e.target.nextElementSibling;
+                btn.innerHTML = `👕 ${file.name}`;
+            }
+        });
+
+        // Analyze pose function
+        document.getElementById('analyzePoseBtn').addEventListener('click', async function() {
+            const personImage = document.getElementById('personImage').files[0];
+            
+            if (!personImage) {
+                showError('Please upload a person image first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const formData = new FormData();
+                formData.append('person_image', personImage);
+
+                const response = await fetch('/analyze-pose', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                hideLoading();
+
+                if (result.success) {
+                    showPoseResults(result);
+                    showSuccess(`Pose analysis complete! ${result.landmarks_count} landmarks detected.`);
+                } else {
+                    showError('Pose analysis failed: ' + result.error);
+                }
+            } catch (error) {
+                hideLoading();
+                showError('Error analyzing pose: ' + error.message);
+            }
+        });
+
+        // Analyze fit function
+        document.getElementById('analyzeFitBtn').addEventListener('click', async function() {
+            const height = document.getElementById('height').value;
+            const weight = document.getElementById('weight').value;
+            const gender = document.getElementById('gender').value;
+            
+            if (!height || !weight) {
+                showError('Please enter height and weight first');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const formData = new FormData();
+                formData.append('height', height);
+                formData.append('weight', weight);
+                formData.append('gender', gender);
+
+                const response = await fetch('/analyze-garment-fit', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                hideLoading();
+
+                if (result.success) {
+                    currentMeasurements = result.body_measurements;
+                    showFitResults(result);
+                    updateSizeRecommendations(result.size_analysis);
+                    showSuccess('Fit analysis complete! Check the recommended size.');
+                } else {
+                    showError('Fit analysis failed: ' + result.error);
+                }
+            } catch (error) {
+                hideLoading();
+                showError('Error analyzing fit: ' + error.message);
+            }
+        });
+
+        // Main form submission
+        document.getElementById('tryOnForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Store uploaded images for later size comparisons
+            currentPersonImage = document.getElementById('personImage').files[0];
+            currentGarmentImage = document.getElementById('garmentImage').files[0];
+            
+            const formData = new FormData();
+            formData.append('person_image', currentPersonImage);
+            formData.append('garment_image', currentGarmentImage);
+            formData.append('height', document.getElementById('height').value);
+            formData.append('weight', document.getElementById('weight').value);
+            formData.append('gender', document.getElementById('gender').value);
+            formData.append('selected_size', selectedSize);
+
+            showLoading();
+            
+            try {
+                const response = await fetch('/process-with-sizing', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                hideLoading();
+
+                if (result.success) {
+                    showTryOnResults(result);
+                    showSuccess('Virtual try-on completed successfully! Now try different sizes using the buttons above.');
+                } else {
+                    showError('Virtual try-on failed: ' + result.error);
+                }
+            } catch (error) {
+                hideLoading();
+                showError('Error processing virtual try-on: ' + error.message);
+            }
+        });
+
+        // Helper functions
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('results').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            setTimeout(() => successDiv.style.display = 'none', 3000);
+        }
+
+        function showPoseResults(result) {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('poseResults').style.display = 'block';
+            
+            if (result.annotated_image) {
+                document.getElementById('poseImage').src = result.annotated_image;
+            }
+            
+            const poseInfo = document.getElementById('poseInfo');
+            poseInfo.innerHTML = `
+                <div class="fit-indicator ${result.pose_detected ? 'fit-perfect' : 'fit-tight'}">
+                    ${result.pose_detected ? '✅ Pose Detected' : '❌ No Pose Detected'}
+                </div>
+                <p>${result.landmarks_count} landmarks detected</p>
+            `;
+        }
+
+        function showFitResults(result) {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('fitResults').style.display = 'block';
+            
+            // Show measurements
+            const measurementsGrid = document.getElementById('measurementsGrid');
+            const measurements = result.body_measurements;
+            measurementsGrid.innerHTML = `
+                <div class="measurement-item">
+                    <div class="measurement-value">${measurements.height_cm}</div>
+                    <div class="measurement-label">Height (cm)</div>
+                </div>
+                <div class="measurement-item">
+                    <div class="measurement-value">${measurements.weight_kg}</div>
+                    <div class="measurement-label">Weight (kg)</div>
+                </div>
+                <div class="measurement-item">
+                    <div class="measurement-value">${measurements.chest_cm.toFixed(1)}</div>
+                    <div class="measurement-label">Chest (cm)</div>
+                </div>
+                <div class="measurement-item">
+                    <div class="measurement-value">${measurements.waist_cm.toFixed(1)}</div>
+                    <div class="measurement-label">Waist (cm)</div>
+                </div>
+                <div class="measurement-item">
+                    <div class="measurement-value">${measurements.bmi.toFixed(1)}</div>
+                    <div class="measurement-label">BMI</div>
+                </div>
+            `;
+            
+            // Show size analysis
+            const sizeAnalysis = document.getElementById('sizeAnalysis');
+            const analysis = result.size_analysis;
+            sizeAnalysis.innerHTML = Object.keys(analysis.size_analysis).map(size => {
+                const sizeData = analysis.size_analysis[size];
+                const fitClass = sizeData.fit_type === 'perfect' ? 'fit-perfect' : 
+                               sizeData.fit_type === 'loose' ? 'fit-loose' : 'fit-tight';
+                
+                return `
+                    <div class="size-comparison-card">
+                        <h4>Size ${size} ${sizeData.is_recommended ? '⭐' : ''}</h4>
+                        <div class="fit-indicator ${fitClass}">
+                            ${sizeData.fit_score.toFixed(0)}% Match
+                        </div>
+                        <p style="font-size: 0.9rem;">${sizeData.fit_description}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showTryOnResults(result) {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('tryOnResults').style.display = 'block';
+            
+            // Show try-on image
+            document.getElementById('tryOnImage').src = result.try_on_result;
+            document.getElementById('comparisonGrid').src = result.comparison_grid;
+            
+            // Show fit indicator
+            const fitAnalysis = result.fit_analysis;
+            const fitIndicator = document.getElementById('fitIndicator');
+            const fitClass = fitAnalysis.fit_type === 'perfect' ? 'fit-perfect' : 
+                           fitAnalysis.fit_type === 'loose' ? 'fit-loose' : 'fit-tight';
+            
+            fitIndicator.className = `fit-indicator ${fitClass}`;
+            fitIndicator.textContent = `${fitAnalysis.fit_type.charAt(0).toUpperCase() + fitAnalysis.fit_type.slice(1)} Fit (${fitAnalysis.fit_score.toFixed(0)}%)`;
+            
+            // Show fit details
+            const fitDetails = document.getElementById('fitDetails');
+            fitDetails.innerHTML = `
+                <p><strong>Selected:</strong> ${fitAnalysis.selected_size}</p>
+                <p><strong>Recommended:</strong> ${fitAnalysis.recommended_size}</p>
+                <p style="font-size: 0.9rem; margin-top: 10px;">${fitAnalysis.fit_description}</p>
+            `;
+        }
+
+        function updateSizeRecommendations(sizeAnalysis) {
+            // Highlight recommended size
+            document.querySelectorAll('.size-option').forEach(option => {
+                option.classList.remove('recommended');
+                if (option.dataset.size === sizeAnalysis.recommended_size) {
+                    option.classList.add('recommended');
+                    option.title = 'Recommended size for you';
+                }
+            });
+        }
+
+        function showSingleSizeResult(result, size) {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('tryOnResults').style.display = 'block';
+            
+            // Show try-on image
+            document.getElementById('tryOnImage').src = result.try_on_result;
+            
+            // Show fit indicator
+            const fitAnalysis = result.fit_analysis;
+            const fitIndicator = document.getElementById('fitIndicator');
+            const fitClass = fitAnalysis.fit_type === 'perfect' ? 'fit-perfect' : 
+                           fitAnalysis.fit_type === 'loose' ? 'fit-loose' : 'fit-tight';
+            
+            fitIndicator.className = `fit-indicator ${fitClass}`;
+            fitIndicator.textContent = `Size ${size} - ${fitAnalysis.fit_type.charAt(0).toUpperCase() + fitAnalysis.fit_type.slice(1)} Fit (${fitAnalysis.fit_score.toFixed(0)}%)`;
+            
+            // Show fit details
+            const fitDetails = document.getElementById('fitDetails');
+            fitDetails.innerHTML = `
+                <p><strong>Selected Size:</strong> ${size}</p>
+                <p><strong>Recommended Size:</strong> ${fitAnalysis.recommended_size}</p>
+                <p><strong>Fit Assessment:</strong> ${fitAnalysis.fit_description}</p>
+                <p><strong>Chest Difference:</strong> ${fitAnalysis.chest_difference > 0 ? '+' : ''}${fitAnalysis.chest_difference.toFixed(1)}cm</p>
+                <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                    <small>💡 Try different sizes using the buttons above to see how they compare!</small>
+                </div>
+            `;
+
+            // Hide comparison grid for single size view
+            document.getElementById('comparisonGrid').style.display = 'none';
+        }
+
+        function showSizeComparisonResults(results) {
+            document.getElementById('results').style.display = 'block';
+            
+            // Create a custom comparison display
+            let comparisonHTML = `
+                <div class="glass-card">
+                    <h3>📊 Size Comparison Results</h3>
+                    <div class="size-comparison-results">
+            `;
+
+            results.forEach((result, index) => {
+                const fitAnalysis = result.fit_analysis;
+                const fitClass = fitAnalysis.fit_type === 'perfect' ? 'fit-perfect' : 
+                               fitAnalysis.fit_type === 'loose' ? 'fit-loose' : 'fit-tight';
+                
+                comparisonHTML += `
+                    <div class="comparison-item">
+                        <div class="comparison-header">
+                            <h4>Size ${result.size}</h4>
+                            <div class="fit-indicator ${fitClass}">
+                                ${fitAnalysis.fit_type.charAt(0).toUpperCase() + fitAnalysis.fit_type.slice(1)} Fit (${fitAnalysis.fit_score.toFixed(0)}%)
+                            </div>
+                        </div>
+                        <img src="${result.try_on_result}" class="comparison-image" alt="Size ${result.size} Try-On">
+                        <div class="comparison-details">
+                            <p>${fitAnalysis.fit_description}</p>
+                            <p><strong>Chest difference:</strong> ${fitAnalysis.chest_difference > 0 ? '+' : ''}${fitAnalysis.chest_difference.toFixed(1)}cm</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            comparisonHTML += `
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <p><strong>Recommendation:</strong> Size ${results.find(r => r.fit_analysis.fit_type === 'perfect')?.size || results[0].fit_analysis.recommended_size} appears to be your best fit!</p>
+                    </div>
+                </div>
+            `;
+
+            // Insert the comparison results
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = comparisonHTML;
+            resultsDiv.style.display = 'block';
+        }
+
+        // Global variables to store AI result data
+        let currentAIResult = null;
+        let currentBodyMeasurements = null;
+        let currentPersonImage = null;
+        let currentGarmentImage = null;
+
+        // Initialize AI size button handlers after DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle AI result size buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('ai-size-btn')) {
+                    handleAISizeSelection(e.target.dataset.size);
+                }
+            });
+
+            // Handle comparison regeneration
+            document.addEventListener('click', function(e) {
+                if (e.target.id === 'compareQuickSizes') {
+                    regenerateQuickComparison();
+                }
+            });
+        });
+
+        function handleAISizeSelection(selectedSize) {
+            if (!currentBodyMeasurements) {
+                showError('Please complete the initial try-on first to get your measurements');
+                return;
+            }
+
+            // Update active button
+            document.querySelectorAll('.ai-size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.size === selectedSize) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Show loading for this specific operation
+            showSizeSelectionLoading(selectedSize);
+
+            // Calculate fit analysis for the selected size
+            const fitAnalysis = calculateFitAnalysis(selectedSize);
+            
+            // Apply visual overlay to show size difference
+            applyAISizeOverlay(selectedSize, fitAnalysis);
+            
+            // Update fit indicator and details
+            updateFitDisplay(selectedSize, fitAnalysis);
+
+            // Show detailed analysis
+            showDetailedFitAnalysis(selectedSize, fitAnalysis);
+
+            hideLoading();
+            showSuccess(`Size ${selectedSize} analysis complete! See how it would fit.`);
+        }
+
+        function calculateFitAnalysis(selectedSize) {
+            if (!currentBodyMeasurements) return null;
+
+            // Use the same sizing logic as the backend
+            const sizeChart = {
+                'XS': { chest: 86, length: 66 },
+                'S': { chest: 91, length: 68 },
+                'M': { chest: 97, length: 70 },
+                'L': { chest: 102, length: 72 },
+                'XL': { chest: 107, length: 74 },
+                'XXL': { chest: 112, length: 76 }
+            };
+
+            const garmentMeasurements = sizeChart[selectedSize];
+            const chestDifference = garmentMeasurements.chest - currentBodyMeasurements.chest_cm;
+            
+            let fitType, fitDescription, fitScore;
+            
+            if (chestDifference <= -3) {
+                fitType = 'tight';
+                fitDescription = 'This size will be tight and may restrict movement';
+                fitScore = Math.max(0, 100 - Math.abs(chestDifference) * 15);
+            } else if (chestDifference >= 8) {
+                fitType = 'loose';
+                fitDescription = 'This size will be loose and may look oversized';
+                fitScore = Math.max(0, 100 - Math.abs(chestDifference) * 10);
+            } else if (Math.abs(chestDifference) <= 2) {
+                fitType = 'perfect';
+                fitDescription = 'This size provides an excellent fit';
+                fitScore = 100 - Math.abs(chestDifference) * 5;
+            } else if (chestDifference > 0) {
+                fitType = 'loose';
+                fitDescription = 'This size will be somewhat loose but comfortable';
+                fitScore = 100 - Math.abs(chestDifference) * 8;
+            } else {
+                fitType = 'tight';
+                fitDescription = 'This size will be somewhat snug but wearable';
+                fitScore = 100 - Math.abs(chestDifference) * 12;
+            }
+
+            return {
+                selectedSize,
+                fitType,
+                fitDescription,
+                fitScore: Math.max(0, fitScore),
+                chestDifference
+            };
+        }
+
+        function applyAISizeOverlay(selectedSize, fitAnalysis) {
+            const tryOnImage = document.getElementById('tryOnImage');
+            const overlay = document.getElementById('sizeOverlay');
+            
+            if (!tryOnImage || !fitAnalysis) return;
+
+            // Create visual overlay based on fit type
+            let overlayColor, overlayText;
+            
+            switch (fitAnalysis.fitType) {
+                case 'tight':
+                    overlayColor = 'rgba(244, 67, 54, 0.3)';
+                    overlayText = '⚠️ TIGHT FIT';
+                    break;
+                case 'loose':
+                    overlayColor = 'rgba(255, 193, 7, 0.3)';
+                    overlayText = '📏 LOOSE FIT';
+                    break;
+                case 'perfect':
+                    overlayColor = 'rgba(76, 175, 80, 0.3)';
+                    overlayText = '✅ PERFECT FIT';
+                    break;
+                default:
+                    overlayColor = 'rgba(255, 255, 255, 0.1)';
+                    overlayText = '📊 ANALYZING';
+            }
+
+            // Create temporary overlay effect
+            const tempOverlay = document.createElement('div');
+            tempOverlay.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: ${overlayColor};
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+                font-size: 1.2rem;
+                color: white;
+                z-index: 10;
+                border-radius: 10px;
+                animation: fadeInOut 2s ease-in-out;
+            `;
+            tempOverlay.textContent = overlayText;
+
+            // Add CSS animation
+            if (!document.getElementById('overlay-animation-style')) {
+                const style = document.createElement('style');
+                style.id = 'overlay-animation-style';
+                style.textContent = `
+                    @keyframes fadeInOut {
+                        0% { opacity: 0; transform: scale(0.8); }
+                        50% { opacity: 1; transform: scale(1); }
+                        100% { opacity: 0; transform: scale(1.1); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // Apply overlay
+            const imageContainer = tryOnImage.parentElement;
+            imageContainer.style.position = 'relative';
+            imageContainer.appendChild(tempOverlay);
+
+            // Remove overlay after animation
+            setTimeout(() => {
+                if (tempOverlay.parentElement) {
+                    tempOverlay.remove();
+                }
+            }, 2000);
+        }
+
+        function updateFitDisplay(selectedSize, fitAnalysis) {
+            const fitIndicator = document.getElementById('fitIndicator');
+            const fitDetails = document.getElementById('fitDetails');
+            
+            if (!fitIndicator || !fitDetails || !fitAnalysis) return;
+
+            // Update fit indicator
+            const fitClass = fitAnalysis.fitType === 'perfect' ? 'fit-perfect' : 
+                           fitAnalysis.fitType === 'loose' ? 'fit-loose' : 'fit-tight';
+            
+            fitIndicator.className = `fit-indicator ${fitClass}`;
+            fitIndicator.textContent = `Size ${selectedSize} - ${fitAnalysis.fitType.charAt(0).toUpperCase() + fitAnalysis.fitType.slice(1)} Fit (${fitAnalysis.fitScore.toFixed(0)}%)`;
+            
+            // Update fit details
+            fitDetails.innerHTML = `
+                <p><strong>Selected Size:</strong> ${selectedSize}</p>
+                <p><strong>Fit Assessment:</strong> ${fitAnalysis.fitDescription}</p>
+                <p><strong>Chest Difference:</strong> ${fitAnalysis.chestDifference > 0 ? '+' : ''}${fitAnalysis.chestDifference.toFixed(1)}cm</p>
+                <p><strong>Fit Score:</strong> ${fitAnalysis.fitScore.toFixed(0)}%</p>
+                <div style="margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px;">
+                    <small>💡 This analysis is based on your AI-processed result and body measurements</small>
+                </div>
+            `;
+        }
+
+        function showDetailedFitAnalysis(selectedSize, fitAnalysis) {
+            const analysisTable = document.getElementById('fitAnalysisTable');
+            const analysisGrid = analysisTable.querySelector('.fit-analysis-grid');
+            
+            if (!analysisTable || !analysisGrid) return;
+
+            // Show all sizes analysis
+            const allSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+            let analysisHTML = '';
+
+            allSizes.forEach(size => {
+                const sizeAnalysis = calculateFitAnalysis(size);
+                const isSelected = size === selectedSize;
+                const fitClass = sizeAnalysis.fitType === 'perfect' ? 'fit-perfect' : 
+                               sizeAnalysis.fitType === 'loose' ? 'fit-loose' : 'fit-tight';
+                
+                analysisHTML += `
+                    <div class="fit-analysis-item ${isSelected ? 'selected' : ''}">
+                        <h5>Size ${size} ${isSelected ? '(Current)' : ''}</h5>
+                        <div class="fit-indicator ${fitClass}" style="margin-bottom: 10px;">
+                            ${sizeAnalysis.fitType.charAt(0).toUpperCase() + sizeAnalysis.fitType.slice(1)} Fit
+                        </div>
+                        <p><strong>Score:</strong> ${sizeAnalysis.fitScore.toFixed(0)}%</p>
+                        <p><strong>Difference:</strong> ${sizeAnalysis.chestDifference > 0 ? '+' : ''}${sizeAnalysis.chestDifference.toFixed(1)}cm</p>
+                    </div>
+                `;
+            });
+
+            analysisGrid.innerHTML = analysisHTML;
+            analysisTable.style.display = 'block';
+        }
+
+        function showSizeSelectionLoading(size) {
+            // Show mini loading indicator for size selection
+            const btn = document.querySelector(`[data-size="${size}"]`);
+            if (btn) {
+                const originalText = btn.textContent;
+                btn.textContent = '⏳';
+                btn.disabled = true;
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 1000);
+            }
+        }
+
+        function regenerateQuickComparison() {
+            if (!currentPersonImage || !currentGarmentImage || !currentBodyMeasurements) {
+                showError('Complete the initial try-on first to regenerate comparisons');
+                return;
+            }
+
+            showSuccess('Regenerating size comparison for S, M, L...');
+            compareAllSizes();
+        }
+
+        // Enhanced showTryOnResults to store AI result data
+        function showTryOnResults(result) {
+            // Store data for size comparisons
+            currentAIResult = result.try_on_result;
+            currentBodyMeasurements = result.body_measurements;
+            
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('tryOnResults').style.display = 'block';
+            
+            // Show try-on image
+            document.getElementById('tryOnImage').src = result.try_on_result;
+            document.getElementById('comparisonGrid').src = result.comparison_grid;
+            
+            // Update size recommendation buttons
+            if (result.size_analysis && result.size_analysis.recommended_size) {
+                document.querySelectorAll('.ai-size-btn').forEach(btn => {
+                    btn.classList.remove('recommended');
+                    if (btn.dataset.size === result.size_analysis.recommended_size) {
+                        btn.classList.add('recommended');
+                        btn.title = 'Recommended size for you';
+                    }
+                });
+            }
+            
+            // Show fit indicator
+            const fitAnalysis = result.fit_analysis;
+            const fitIndicator = document.getElementById('fitIndicator');
+            const fitClass = fitAnalysis.fit_type === 'perfect' ? 'fit-perfect' : 
+                           fitAnalysis.fit_type === 'loose' ? 'fit-loose' : 'fit-tight';
+            
+            fitIndicator.className = `fit-indicator ${fitClass}`;
+            fitIndicator.textContent = `${fitAnalysis.fit_type.charAt(0).toUpperCase() + fitAnalysis.fit_type.slice(1)} Fit (${fitAnalysis.fit_score.toFixed(0)}%)`;
+            
+            // Show fit details
+            const fitDetails = document.getElementById('fitDetails');
+            fitDetails.innerHTML = `
+                <p><strong>Selected:</strong> ${fitAnalysis.selected_size}</p>
+                <p><strong>Recommended:</strong> ${fitAnalysis.recommended_size}</p>
+                <p style="font-size: 0.9rem; margin-top: 10px;">${fitAnalysis.fit_description}</p>
+            `;
+
+            // Set the active size button
+            document.querySelectorAll('.ai-size-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.size === fitAnalysis.selected_size) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

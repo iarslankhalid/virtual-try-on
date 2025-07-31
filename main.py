@@ -10,7 +10,7 @@ import base64
 import io
 from PIL import Image
 import os
-from typing import Optional
+from typing import Optional, List, Dict, Any
 import json
 import asyncio
 import uuid
@@ -18,8 +18,15 @@ import time
 import requests
 from gradio_client import Client
 from dotenv import load_dotenv
+import cv2
+import mediapipe as mp
+import numpy as np
 from kling_ai_client import KlingAIClient, process_virtual_tryon_kling
 from body_measurements import BodyMeasurementPredictor, get_size_recommendations
+from garment_sizing import (
+    GarmentSizingSystem, VirtualTryOnVisualizer, 
+    process_virtual_tryon_with_sizing, GarmentSize, FitType
+)
 
 # Load environment variables
 load_dotenv()
@@ -60,6 +67,82 @@ USE_KLING_AI = True  # Enable KlingAI by default
 
 # Initialize body measurement predictor
 body_predictor = BodyMeasurementPredictor()
+
+# Initialize MediaPipe pose detection
+mp_pose = mp.solutions.pose
+mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
+
+# Initialize garment sizing system
+garment_sizing = GarmentSizingSystem()
+virtual_tryon_visualizer = VirtualTryOnVisualizer()
+
+class PoseDetector:
+    def __init__(self):
+        self.pose_static = mp_pose.Pose(
+            static_image_mode=True,
+            model_complexity=2,
+            enable_segmentation=False,
+            min_detection_confidence=0.5
+        )
+    
+    def detect_pose_landmarks(self, image_path: str) -> tuple:
+        """Detect pose landmarks in an image and return landmark data"""
+        # Read image
+        image = cv2.imread(image_path)
+        if image is None:
+            return None, None, False
+        
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        
+        # Process the image
+        results = self.pose_static.process(image_rgb)
+        
+        # Draw pose landmarks
+        annotated_image = image.copy()
+        pose_data = []
+        
+        if results.pose_landmarks:
+            # Custom drawing specs
+            landmark_drawing_spec = mp_drawing.DrawingSpec(
+                color=(0, 255, 0), thickness=8, circle_radius=6
+            )
+            connection_drawing_spec = mp_drawing.DrawingSpec(
+                color=(255, 0, 0), thickness=6
+            )
+            
+            # Draw landmarks
+            mp_drawing.draw_landmarks(
+                annotated_image,
+                results.pose_landmarks,
+                mp_pose.POSE_CONNECTIONS,
+                landmark_drawing_spec=landmark_drawing_spec,
+                connection_drawing_spec=connection_drawing_spec
+            )
+            
+            # Extract landmark coordinates
+            landmarks = results.pose_landmarks.landmark
+            h, w, _ = image.shape
+            
+            for idx, landmark in enumerate(landmarks):
+                x = int(landmark.x * w)
+                y = int(landmark.y * h)
+                z = landmark.z
+                visibility = landmark.visibility
+                
+                pose_data.append({
+                    'id': idx,
+                    'name': mp_pose.PoseLandmark(idx).name,
+                    'x': x,
+                    'y': y,
+                    'z': z,
+                    'visibility': visibility
+                })
+        
+        return annotated_image, pose_data, results.pose_landmarks is not None
+
+# Initialize pose detector
+pose_detector = PoseDetector()
 
 def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
     """Verify username and password"""
@@ -421,9 +504,19 @@ async def call_alternative_queue_api(person_image_data: str, garment_image_data:
             return {"success": False, "error": f"Alternative queue error: {str(e)}"}
 
 @app.get("/")
-async def home(request: Request, username: str = Depends(verify_credentials)):
-    """Serve the main virtual try-on interface"""
-    return templates.TemplateResponse("index.html", {"request": request, "username": username})
+async def index(request: Request, username: str = Depends(verify_credentials)):
+    """Main page"""
+    return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/enhanced")
+async def enhanced_tryon(request: Request, username: str = Depends(verify_credentials)):
+    """Enhanced virtual try-on with sizing and pose detection"""
+    return templates.TemplateResponse("enhanced_tryon.html", {"request": request})
+
+@app.get("/simple")
+async def simple_sizing_demo(request: Request, username: str = Depends(verify_credentials)):
+    """Simple demo page for testing individual size try-ons"""
+    return templates.TemplateResponse("enhanced_tryon.html", {"request": request})
 
 @app.get("/test-measurements")
 async def test_measurements_page(request: Request):
@@ -923,6 +1016,253 @@ async def generate_demo_result(person_image_data: str, garment_image_data: str) 
             "success": False,
             "error": f"Demo generation failed: {str(e)}"
         }
+
+# ============ ENHANCED SIZING-AWARE VIRTUAL TRY-ON ROUTES ============
+
+@app.post("/process-with-sizing")
+async def process_virtual_tryon_with_sizing(
+    person_image: UploadFile = File(...),
+    garment_image: UploadFile = File(...),
+    height: float = Form(..., description="Height in centimeters"),
+    weight: float = Form(..., description="Weight in kilograms"),
+    gender: str = Form(default="unisex", description="Gender: male, female, or unisex"),
+    selected_size: str = Form(default="M", description="Selected garment size (XS, S, M, L, XL, XXL)"),
+    username: str = Depends(verify_credentials)
+):
+    """Process virtual try-on with pose detection, sizing analysis, and fit visualization"""
+    
+    try:
+        print(f"🔄 Processing sizing-aware request for user: {username}")
+        print(f"📏 User measurements: {height}cm, {weight}kg, {gender}")
+        print(f"👕 Selected size: {selected_size}")
+
+        # Validate inputs
+        if height < 120 or height > 250:
+            raise HTTPException(status_code=400, detail="Height must be between 120-250 cm")
+        if weight < 30 or weight > 300:
+            raise HTTPException(status_code=400, detail="Weight must be between 30-300 kg")
+        if gender.lower() not in ['male', 'female', 'unisex']:
+            raise HTTPException(status_code=400, detail="Gender must be 'male', 'female', or 'unisex'")
+        
+        valid_sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+        if selected_size.upper() not in valid_sizes:
+            raise HTTPException(status_code=400, detail=f"Size must be one of: {', '.join(valid_sizes)}")
+
+        # Validate file types and sizes
+        if not person_image.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="Person file must be an image")
+        if not garment_image.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="Garment file must be an image")
+
+        max_size = 10 * 1024 * 1024  # 10MB
+        if person_image.size and person_image.size > max_size:
+            raise HTTPException(status_code=400, detail="Person image too large (max 10MB)")
+        if garment_image.size and garment_image.size > max_size:
+            raise HTTPException(status_code=400, detail="Garment image too large (max 10MB)")
+
+        # Predict body measurements
+        print("📐 Calculating body measurements...")
+        measurements = body_predictor.predict_measurements(height, weight, gender.lower())
+        size_recommendations = get_size_recommendations(measurements)
+        
+        print(f"📊 Predicted measurements - Chest: {measurements.chest_cm}cm")
+
+        # Save uploaded images temporarily
+        person_temp_path = f"temp_person_{uuid.uuid4().hex}.jpg"
+        garment_temp_path = f"temp_garment_{uuid.uuid4().hex}.jpg"
+        
+        try:
+            # Save person image
+            person_contents = await person_image.read()
+            with open(person_temp_path, "wb") as f:
+                f.write(person_contents)
+            
+            # Save garment image
+            garment_contents = await garment_image.read()
+            with open(garment_temp_path, "wb") as f:
+                f.write(garment_contents)
+            
+            # Detect pose landmarks in person image
+            print("🕺 Detecting pose landmarks...")
+            annotated_image, pose_data, pose_detected = pose_detector.detect_pose_landmarks(person_temp_path)
+            
+            # Process virtual try-on with sizing
+            print("👕 Processing virtual try-on with sizing analysis...")
+            result = process_virtual_tryon_with_sizing(
+                person_temp_path, 
+                garment_temp_path,
+                measurements.chest_cm,
+                height,
+                selected_size.upper(),
+                gender.lower(),
+                pose_data
+            )
+            
+            # Get size comparison data
+            size_comparison = garment_sizing.get_size_comparison_data(
+                measurements.chest_cm, height, gender.lower()
+            )
+            
+            # Prepare response
+            response_data = {
+                "success": True,
+                "pose_detected": pose_detected,
+                "landmarks_count": len(pose_data) if pose_data else 0,
+                "try_on_result": result["try_on_result"],
+                "comparison_grid": result["comparison_grid"],
+                "fit_analysis": result["fit_analysis"],
+                "size_comparison": size_comparison,
+                "body_measurements": {
+                    "height_cm": measurements.height_cm,
+                    "weight_kg": measurements.weight_kg,
+                    "gender": measurements.gender.value,
+                    "chest_cm": measurements.chest_cm,
+                    "waist_cm": measurements.waist_cm,
+                    "hip_cm": measurements.hip_cm,
+                    "shoulder_width_cm": measurements.shoulder_width_cm,
+                    "bmi": measurements.bmi,
+                },
+                "size_recommendations": size_recommendations,
+                "pose_landmarks": pose_data if pose_detected else None
+            }
+            
+            print("✅ Sizing-aware virtual try-on completed successfully")
+            return JSONResponse(response_data)
+            
+        finally:
+            # Clean up temporary files
+            for temp_file in [person_temp_path, garment_temp_path]:
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"💥 Server error in sizing-aware try-on: {str(e)}")
+        return JSONResponse({
+            "success": False,
+            "error": f"Server error: {str(e)}"
+        }, status_code=500)
+
+
+@app.post("/analyze-pose")
+async def analyze_pose(
+    person_image: UploadFile = File(...),
+    username: str = Depends(verify_credentials)
+):
+    """Analyze pose landmarks in a person's image"""
+    
+    try:
+        print(f"🕺 Analyzing pose for user: {username}")
+
+        # Validate file
+        if not person_image.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="File must be an image")
+
+        max_size = 10 * 1024 * 1024  # 10MB
+        if person_image.size and person_image.size > max_size:
+            raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
+
+        # Save image temporarily
+        temp_path = f"temp_pose_{uuid.uuid4().hex}.jpg"
+        
+        try:
+            contents = await person_image.read()
+            with open(temp_path, "wb") as f:
+                f.write(contents)
+            
+            # Detect pose landmarks
+            annotated_image, pose_data, pose_detected = pose_detector.detect_pose_landmarks(temp_path)
+            
+            if annotated_image is not None:
+                # Convert annotated image to base64
+                _, buffer = cv2.imencode('.jpg', annotated_image)
+                img_str = base64.b64encode(buffer).decode()
+                annotated_b64 = f"data:image/jpeg;base64,{img_str}"
+            else:
+                annotated_b64 = None
+            
+            return JSONResponse({
+                "success": True,
+                "pose_detected": pose_detected,
+                "landmarks_count": len(pose_data) if pose_data else 0,
+                "annotated_image": annotated_b64,
+                "pose_landmarks": pose_data if pose_detected else None,
+                "message": "Pose detected successfully" if pose_detected else "No pose detected"
+            })
+            
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"💥 Server error in pose analysis: {str(e)}")
+        return JSONResponse({
+            "success": False,
+            "error": f"Server error: {str(e)}"
+        }, status_code=500)
+
+
+@app.post("/analyze-garment-fit")
+async def analyze_garment_fit(
+    height: float = Form(..., description="Height in centimeters"),
+    weight: float = Form(..., description="Weight in kilograms"),
+    gender: str = Form(default="unisex", description="Gender: male, female, or unisex"),
+    username: str = Depends(verify_credentials)
+):
+    """Analyze garment fit for all available sizes based on body measurements"""
+    
+    try:
+        print(f"📏 Analyzing garment fit for user: {username}")
+        print(f"📊 Measurements: {height}cm, {weight}kg, {gender}")
+
+        # Validate inputs
+        if height < 120 or height > 250:
+            raise HTTPException(status_code=400, detail="Height must be between 120-250 cm")
+        if weight < 30 or weight > 300:
+            raise HTTPException(status_code=400, detail="Weight must be between 30-300 kg")
+        if gender.lower() not in ['male', 'female', 'unisex']:
+            raise HTTPException(status_code=400, detail="Gender must be 'male', 'female', or 'unisex'")
+
+        # Predict body measurements
+        measurements = body_predictor.predict_measurements(height, weight, gender.lower())
+        
+        # Get size comparison data
+        size_comparison = garment_sizing.get_size_comparison_data(
+            measurements.chest_cm, height, gender.lower()
+        )
+        
+        # Get size recommendations
+        size_recommendations = get_size_recommendations(measurements)
+        
+        return JSONResponse({
+            "success": True,
+            "body_measurements": {
+                "height_cm": measurements.height_cm,
+                "weight_kg": measurements.weight_kg,
+                "gender": measurements.gender.value,
+                "chest_cm": measurements.chest_cm,
+                "waist_cm": measurements.waist_cm,
+                "hip_cm": measurements.hip_cm,
+                "shoulder_width_cm": measurements.shoulder_width_cm,
+                "bmi": measurements.bmi,
+            },
+            "size_analysis": size_comparison,
+            "size_recommendations": size_recommendations,
+            "message": "Garment fit analysis completed successfully"
+        })
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"💥 Server error in fit analysis: {str(e)}")
+        return JSONResponse({
+            "success": False,
+            "error": f"Server error: {str(e)}"
+        }, status_code=500)
+
 
 if __name__ == "__main__":
     import uvicorn
